@@ -38,7 +38,7 @@ try:
             if confidence < 0.5:
                 continue
 
-            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+            box = detections[0, 0, i, 3:7] * np.array([W, H, W, H])
             print(box.astype("int"))
 
     #    cv2.imshow("Frame", frame)
