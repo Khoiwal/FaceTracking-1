@@ -41,13 +41,13 @@ try:
             box = detections[0, 0, i, 3:7] * np.array([W, H, W, H])
             print(box.astype("int"))
 
-    #    cv2.imshow("Frame", frame)
-    #    key = cv2.waitKey(1) & 0xFF
+        cv2.imshow("Frame", frame)
+        key = cv2.waitKey(1) & 0xFF
 
-        #if key == ord("q"):
-        #    break
+        if key == ord("q"):
+            break
 
-    #cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
     vs.stop()
 
 
