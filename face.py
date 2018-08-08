@@ -10,7 +10,6 @@ import time
 
 model = "res10_300x300_ssd_iter_140000.caffemodel"
 prototxt = "deploy.prototxt.txt"
-ct = CentroidTracker()
 (H, W) = (None, None)
 
 print("[INFO] loading model...")
