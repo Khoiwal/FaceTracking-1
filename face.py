@@ -1,4 +1,5 @@
 import unicornhathd
+from imutils.VideoStream import VideoStream
 import imutils
 import numpy as np
 import cv2
