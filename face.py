@@ -1,69 +1,56 @@
+from imutils.video import VideoStream
+import unicornhathd
+import imutils
+import numpy as np
 import cv2
 import sys
 import os
 import math
-from threading import Thread
 
+import time
 
-class UIUpdate(Thread):
-    def __init__(self, faceTracking):
-        Thread.__init__(self)
-        self.daemon = True
+model = "res10_300x300_ssd_iter_140000.caffemodel"
+prototxt = "deploy.prototxt.txt"
 
-    def run(self):
-        while True:
-            faces = faceTracking.getFaces()
-            print(faces)
+net = cv2.dnn.readNetFromCaffe(prototxt, model)
+vs = VideoStream(src=0).start()
 
-
-class FaceTrack(Thread):
-    def __init__(self):
-        Thread.__init__(self)
-        self.daemon = True
-        cascPath = "./face.xml"
-        self.faceCascade = cv2.CascadeClassifier(cascPath)
-        self.video_capture = cv2.VideoCapture(0)
-        self.width = self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.height = self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        self.faces = []
-
-    def getFaces(self):
-        return self.faces;
-
-    def run(self):
-
-        while True:
-
-            ret, frame = self.video_capture.read()
-
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-            faces = self.faceCascade.detectMultiScale(
-                gray,
-                scaleFactor=1.1,
-                minNeighbors=5,
-                flags=cv2.CASCADE_SCALE_IMAGE
-            )
-            self.faces = [];
-
-            for (x, y, w, h) in faces:
-                face_center_w = x + (w/2)
-                face_center_h = y + (h/4)
-                percentage_x = 100 - ((face_center_w/self.width) * 100)
-                percentage_y = (face_center_h / self.width) * 100
-                self.faces.append([percentage_x, percentage_y])
-
-        self.video_capture.release()
+time.sleep(2.0)
 
 try:
     print("Starting face tracking")
-    faceTracking = FaceTrack()
-    faceTracking.start()
 
-    ui = UIUpdate(faceTracking)
-    ui.start()
     while True:
-        pass
+
+        frame = vs.read()
+        frame = imutils.resize(frame, width=400)
+        (h, w) = frame.shape[:2]
+        blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300,300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
+        net.setInput(blob)
+        detections = net.forward()
+        for i in range(0, detections.shape[2]):
+            confidence = detections[0, 0, i, 2]
+            if confidence < 0.5:
+                continue
+
+            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+            (startX, startY, endX, endY) = box.astype("int")
+
+            text = "{:.2f}%".format(confidence * 100)
+            y = startY - 10 if startY - 10 > 10 else startY + 10
+            cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 0, 255), 2)
+            cv2.putText(frame, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+
+        cv2.imshow("Frame", frame)
+        key = cv2.waitKey(1) & 0xFF
+
+        if key == ord("q"):
+            break
+
+    cv2.destroyAllWindows()
+    vs.stop()
+
 
 except KeyboardInterrupt:
+    unicornhathd.off()
     print("Face Tracking Ending")
